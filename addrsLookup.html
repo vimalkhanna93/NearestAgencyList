@@ -1,0 +1,85 @@
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB9VPALA9Mrm7kjJ5wQ6hgPg87j9IChuTI&libraries=geometry"></script>
+</head>
+<body>
+<label>Address 1:</label>
+<input id="addrs1" style="width:300px"></input>
+<br>
+<label>Address 2:</label>
+<input id="addrs2" style="width:300px"></input>
+<br>
+<button id="btn" onclick="myFunc()">Submit</button>
+<ul id="list" class="list-group">
+</ul>
+<script>
+function myFunc() {
+  var addrs1 = encodeURI(document.getElementById("addrs1").value);
+  var addrs2 = encodeURI(document.getElementById("addrs2").value);
+  url1 = 'https://maps.googleapis.com/maps/api/geocode/json?address=' + addrs1 + '&key=AIzaSyB9VPALA9Mrm7kjJ5wQ6hgPg87j9IChuTI';
+  url2 = 'https://maps.googleapis.com/maps/api/geocode/json?address=' + addrs2 + '&key=AIzaSyB9VPALA9Mrm7kjJ5wQ6hgPg87j9IChuTI';
+  var d1 = $.get(url1);
+  var d2 = $.get(url2);
+  $.when(d1, d2).done(function(source1, source2) {
+    findNearBy(source1[0].results[0].geometry.location, source2[0].results[0].geometry.location);
+  });
+}
+
+function findNearBy(source1, source2) {
+  var xhttp = new XMLHttpRequest();
+  var url1 = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=' + source1.lat + ',' + source1.lng + '&radius=16000&keyword=real+estate+agency&key=AIzaSyB9VPALA9Mrm7kjJ5wQ6hgPg87j9IChuTI';
+  var url2 = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=' + source2.lat + ',' + source2.lng + '&radius=16000&keyword=real+estate+agency&key=AIzaSyB9VPALA9Mrm7kjJ5wQ6hgPg87j9IChuTI';
+  var d1 = $.get(url1);
+  var d2 = $.get(url2);
+  $.when(d1, d2).done(function(places1, places2) {
+    var allPlaces = [];
+    console.log(places1);
+    for(var i=0;i<places1[0].results.length;i++) {
+      var object = places1[0].results[i].geometry.location;
+      object.name = places1[0].results[i].name;
+      object.id = places1[0].results[i].id;
+      allPlaces.push(object);
+    }
+    for(var i=0;i<places2[0].results.length;i++) {
+      var object = places2[0].results[i].geometry.location;
+      object.name = places2[0].results[i].name;
+      object.id = places2[0].results[i].id;
+      allPlaces.push(object);
+    }
+    plotTable(source1, source2, allPlaces);
+  });
+}
+
+function plotTable(source1, source2, allPlaces) {
+  var list = document.getElementById('list');
+  var source1latlng = new google.maps.LatLng(source1.lat,source1.lng);
+  var source2latlng = new google.maps.LatLng(source2.lat,source2.lng);
+  var distances = [];
+  for(var i=0;i<allPlaces.length;i++) {
+    var destlatlng = new google.maps.LatLng(allPlaces[i].lat,allPlaces[i].lng);
+    var temp = google.maps.geometry.spherical.computeDistanceBetween(source1latlng,destlatlng) + google.maps.geometry.spherical.computeDistanceBetween(source2latlng,destlatlng);
+    allPlaces[i].distance = Math.round(temp*100)/100;
+  }
+  allPlaces.sort(function(a, b) {
+     return a.distance - b.distance;
+  });
+  var places = [];
+  for(var i=0;i<allPlaces.length;i++) {
+    places[allPlaces[i].id] = allPlaces[i];
+  }
+  allPlaces = [];
+  for(place in places) {
+    allPlaces.push(places[place]);
+  }
+  var count = [];
+  for(var i = 0;i<allPlaces.length;i++) {
+    var entry = document.createElement('li');
+    var away = Math.round((allPlaces[i].distance/1609.344)*100)/100;
+    var content = allPlaces[i].name + "(" + away + " miles away" + ")";
+    entry.appendChild(document.createTextNode(content));
+    list.appendChild(entry);
+  }
+}
+</script>
+</html>
