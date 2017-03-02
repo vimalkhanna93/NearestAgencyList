@@ -5,6 +5,7 @@ NearestAgencyList
 This application gives you list of real estate agency sorted based on distance. 
 
 Steps to run the application:
+-----------------------------
 1. Enter 2 different addresses in the input boxes. 
 2. Click search button 
 3. The application lists the nearest real estate agencies sorted according to the distance
